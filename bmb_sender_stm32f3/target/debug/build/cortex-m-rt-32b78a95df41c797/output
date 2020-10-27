@@ -1,3 +1,0 @@
-cargo:rustc-link-search=/home/coffeyrt/Bluetooth_Maids_Buzzer/bmb_sender_stm32f3/target/debug/build/cortex-m-rt-32b78a95df41c797/out
-cargo:rerun-if-changed=build.rs
-cargo:rerun-if-changed=link.x.in
