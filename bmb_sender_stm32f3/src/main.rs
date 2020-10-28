@@ -1,7 +1,11 @@
 #![no_main]
 #![no_std]
-#[allow(unused_extern_crates)] // NOTE(allow) bug rust-lang/rust53964
-extern crate panic_itm; // panic handler
+
+#[cfg(debug_assertions)]
+use panic_itm as _;
+
+#[cfg(not(debug_assertions))]
+use panic_abort as _;
 
 use cortex_m_rt::entry;
 use stm32f3xx_hal::{prelude::*, stm32};
@@ -30,14 +34,21 @@ fn main() -> ! {
         &mut rcc.apb2,
     );
     let (mut usart1_tx, mut usart1_rx) = usart1.split();
-    usart1_tx.write(1u8).unwrap();
+    let mut tim6 =
+        stm32f3xx_hal::timer::Timer::tim6(peripherals.TIM6, 8.mhz(), clocks, &mut rcc.apb1);
+    // loop {
+    //      usart1_tx.write(2u8).unwrap();
+    //      usart1_tx.bflush().unwrap();
+    //     tim6.wait().unwrap();
+    //  }
+    let mut recieved = false;
     loop {
-        let mut recieved = false;
         if let Ok(byte) = usart1_rx.read() {
-            if byte == 1u8 {
-                recieved = true
-            }
+            recieved = true;
+            usart1_tx.write(byte).unwrap();
         }
-        if recieved {}
+        if recieved {
+            recieved = false
+        }
     }
 }
