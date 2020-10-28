@@ -1,15 +1,10 @@
 #![no_main]
 #![no_std]
+#[allow(unused_extern_crates)] // NOTE(allow) bug rust-lang/rust53964
+extern crate panic_itm; // panic handler
 
 use cortex_m_rt::entry;
 use stm32f3xx_hal::{prelude::*, stm32};
-// use stm32f3::stm32f303;
-// use stm32f303::interrupt;
-
-#[panic_handler]
-fn my_panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
 
 #[entry]
 fn main() -> ! {
@@ -23,7 +18,7 @@ fn main() -> ! {
 
     // usart1 is on apb2enr bus.  Writing and enabling usart1 enable bit
     let mut gpioa = peripherals.GPIOA.split(&mut rcc.ahb);
-    let mut gpioe = peripherals.GPIOE.split(&mut rcc.ahb);
+    // let mut gpioe = peripherals.GPIOE.split(&mut rcc.ahb);
     let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
     let usart1_rxd = gpioa.pa10.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
 
