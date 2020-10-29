@@ -46,20 +46,19 @@ fn main() -> ! {
     block!(tim6.wait());
     let mut recieved = false;
     loop {
-        if button.is_low().unwrap() {
-            usart1_tx.bwrite_all(&b"LOW"[..]).unwrap();
-            usart1_tx.bflush().unwrap();
-        } else {
-            if button.is_high().unwrap() {
-                for byte in b"HIGH" {
-                    usart1_tx.write(*byte).unwrap();
-                }
-            } else {
-                for byte in b"NONE" {
-                    usart1_tx.write(*byte).unwrap();
-                }
-            }
-        }
+        // Below is for debugging
+        //if button.is_low().unwrap() {
+        //    usart1_tx.bwrite_all(&b"LOW"[..]).unwrap();
+        //    usart1_tx.bflush().unwrap();
+        //} else {
+        //    if button.is_high().unwrap() {
+        //        usart1_tx.bwrite_all(&b"HIGH"[..]).unwrap();
+        //        usart1_tx.bflush().unwrap();
+        //    } else {
+        //        usart1_tx.bwrite_all(&b"NONE"[..]).unwrap();
+        //        usart1_tx.bflush().unwrap();
+        //    }
+        //}
         while button.is_low().unwrap() {}
         usart1_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
         usart1_tx.bflush().unwrap();
