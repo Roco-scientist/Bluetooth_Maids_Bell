@@ -4,6 +4,7 @@ Raspberry pi 0 W: <a href=https://www.adafruit.com/product/3400>Buy here</a><br>
 Rust needs to be installed to build<br>
 
 ## Bluetooth connection
+`sudo apt-get install bluez bluetooth`<br>
 Check status<br>
 `service bluetooth status`<br>
 Turn on if it is not on<br>
