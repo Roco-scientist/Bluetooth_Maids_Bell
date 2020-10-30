@@ -15,6 +15,7 @@ it sends a signal through the bluetooth and a buzzer turns on at the other end.<
 <li>STM32F3DISCOVERY</li>
 <li>2x STM32F401 black pill (likely overkill and will work with blue pill STM32F103)</li>
 <li>2x HC-05 bluetooth boards (1x HC-05 and 1x HC-06 will work too)</li>
+<li>USB serial converter for programming HC-05: <a href=https://www.aliexpress.com/item/32809304504.html>Available here</a></li>
 <li>Momentary switch/button</li>
 <li>Misc electronics; wires, soldering gun, resistors etc.</li>
 </ul>
