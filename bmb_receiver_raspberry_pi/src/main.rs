@@ -3,7 +3,8 @@ use std::time;
 
 fn main() {
     // create bluetooth uart connection with no parity, 8 bits data, and 1 bit stopping
-    let mut bluetooth = uart::Uart::new(9600, uart::Parity::None, 8, 1).unwrap();
+    let mut bluetooth =
+        uart::Uart::with_path("/dev/ttyACM0", 9600, uart::Parity::None, 8, 1).unwrap();
 
     // setup the bluetooth to pause waiting for a read with a minimum of 4 bits
     bluetooth
