@@ -16,8 +16,8 @@ fn main() {
     bluetooth.set_write_mode(true).unwrap();
 
     // Setup buzzer output pin
-    let gpio = gpio::Gpio::new();
-    let buzzer_pin = gpio.get(23).unwrap().into_output();
+    let gpio = gpio::Gpio::new().unwrap();
+    let mut buzzer_pin = gpio.get(24).unwrap().into_output();
 
     loop {
         // create empty data array to put read data into
@@ -33,7 +33,7 @@ fn main() {
         bluetooth.write(&b"RECEIVED"[..]).unwrap();
 
         // set buzzer signal
-        buzz(buzzer_pin, 500, time::Duration::from_secs(3)).unwrap();
+        buzz(&mut buzzer_pin, 500, time::Duration::from_secs(3)).unwrap();
 
         // flush anything else remaining in the buffers
         bluetooth.flush(uart::Queue::Both).unwrap();
@@ -41,7 +41,7 @@ fn main() {
 }
 
 fn buzz(
-    pin: gpio::Gpio,
+    pin: &mut gpio::OutputPin,
     hz: u32,
     duration: time::Duration,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -50,13 +50,13 @@ fn buzz(
 
     // find the number of times signal needs to be changed.  2x because both up and down need to be
     // set
-    let repeats = 2 * hz as f32 * duration.as_secs() as f32;
+    let repeats = (2f32 * hz as f32 * duration.as_secs() as f32) as u32;
 
     // find the puases needed to crete the duration without a timer
     let pause = duration / repeats;
 
     // set the pin to high then low with previous paramaters
-    for _ in 0..repeats as u32 {
+    for _ in 0..repeats {
         pin.set_high();
         thread::sleep(pause);
         pin.set_low();
