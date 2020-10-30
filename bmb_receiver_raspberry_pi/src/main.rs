@@ -1,5 +1,5 @@
-use rppal::uart;
-use std::time;
+use rppal::{gpio, uart};
+use std::{thread, time};
 
 fn main() {
     // create bluetooth uart connection with no parity, 8 bits data, and 1 bit stopping
@@ -15,7 +15,11 @@ fn main() {
     // setup blocking write so writing is always completed
     bluetooth.set_write_mode(true).unwrap();
 
-    loop{
+    // Setup buzzer output pin
+    let gpio = gpio::Gpio::new().unwrap();
+    let mut buzzer_pin = gpio.get(24).unwrap().into_output();
+
+    loop {
         // create empty data array to put read data into
         let mut data = [0u8; 32usize];
 
@@ -28,7 +32,36 @@ fn main() {
         // return a signal of receipt and confirmation
         bluetooth.write(&b"RECEIVED"[..]).unwrap();
 
+        // set buzzer signal
+        buzz(&mut buzzer_pin, 50, time::Duration::from_secs(3)).unwrap();
+
         // flush anything else remaining in the buffers
         bluetooth.flush(uart::Queue::Both).unwrap();
     }
+}
+
+fn buzz(
+    pin: &mut gpio::OutputPin,
+    hz: u32,
+    duration: time::Duration,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // start with pin in low to make sure
+    pin.set_low();
+
+    // find the number of times signal needs to be changed.  2x because both up and down need to be
+    // set
+    let repeats = (2f32 * hz as f32 * duration.as_secs() as f32) as u32;
+
+    // find the puases needed to crete the duration without a timer
+    let pause = duration / repeats;
+
+    // set the pin to high then low with previous paramaters
+    for _ in 0..repeats {
+        pin.set_high();
+        thread::sleep(pause);
+        pin.set_low();
+        thread::sleep(pause);
+    }
+    // Return result in case an unwrap or something similar needed later
+    Ok(())
 }

@@ -1,7 +1,13 @@
 # Bluetooth Maids Buzzer receiver for raspberry pi 0 w
 ## Required
-Raspberry pi 0 W: <a href=https://www.adafruit.com/product/3400>Buy here</a><br>
+<ul>
+<li>Raspberry pi 0 W: <a href=https://www.adafruit.com/product/3400>Buy here</a></li>
+<li>Passive buzzer: <a href=https://www.amazon.com/Cylewet-Terminals-Electronic-Electromagnetic-Impedance/dp/B01NCOXB2Q/ref=pd_all_pref_5/144-7466200-9980159>US sourece</a> or <a href=https://www.aliexpress.com/item/4000148640191.html>China source</a></li>
+</ul>
 Rust needs to be installed to build<br>
+
+## Buzzer connection
+Connect + to GPOI24 and other terminal to GRND on Raspberry pi
 
 ## Bluetooth connection
 `sudo apt-get install bluez bluetooth`<br>
