@@ -33,7 +33,7 @@ fn main() {
         bluetooth.write(&b"RECEIVED"[..]).unwrap();
 
         // set buzzer signal
-        buzz(&mut buzzer_pin, 500, time::Duration::from_secs(3)).unwrap();
+        buzz(&mut buzzer_pin, 50, time::Duration::from_secs(3)).unwrap();
 
         // flush anything else remaining in the buffers
         bluetooth.flush(uart::Queue::Both).unwrap();
