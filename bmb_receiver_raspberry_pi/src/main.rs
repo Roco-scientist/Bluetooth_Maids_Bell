@@ -32,8 +32,12 @@ fn main() {
         // return a signal of receipt and confirmation
         bluetooth.write(&b"RECEIVED"[..]).unwrap();
 
-        // set buzzer signal
-        buzz(&mut buzzer_pin, 50, time::Duration::from_secs(3)).unwrap();
+        // run buzzer signal
+        buzz(&mut buzzer_pin, 300, time::Duration::from_millis(500)).unwrap();
+        thread::sleep(time::Duration::from_millis(250));
+        buzz(&mut buzzer_pin, 1000, time::Duration::from_millis(500)).unwrap();
+        thread::sleep(time::Duration::from_millis(250));
+        buzz(&mut buzzer_pin, 200, time::Duration::from_millis(500)).unwrap();
 
         // flush anything else remaining in the buffers
         bluetooth.flush(uart::Queue::Both).unwrap();
@@ -50,7 +54,7 @@ fn buzz(
 
     // find the number of times signal needs to be changed.  2x because both up and down need to be
     // set
-    let repeats = (2f32 * hz as f32 * duration.as_secs() as f32) as u32;
+    let repeats = (hz as f32 * duration.as_millis() as f32 / 1000f32) as u32;
 
     // find the puases needed to crete the duration without a timer
     let pause = duration / repeats;
