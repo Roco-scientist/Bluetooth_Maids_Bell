@@ -1,6 +1,6 @@
 # Bluetooth Maids Buzzer receiver for raspberry pi 0 w
 ## Required
-Raspberry pi 0 W: <a href=https://www.adafruit.com/product/3400>Buy here</a><rb>
+Raspberry pi 0 W: <a href=https://www.adafruit.com/product/3400>Buy here</a><br>
 Rust needs to be installed to build<br>
 
 ## Bluetooth connection
