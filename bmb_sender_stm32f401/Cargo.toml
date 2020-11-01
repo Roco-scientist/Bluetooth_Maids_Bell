@@ -10,8 +10,7 @@ edition = "2018"
 cortex-m-rt = "0.6"
 panic-itm = "0.4"
 panic-abort = "0.3"
-stm32f4xx-hal = {version = "0.5.0", features = ["stm32f401", "rt"]}
-nb = "0.1"
+stm32f4xx-hal = {version = "0.8", features = ["stm32f401", "rt"]}
 
 [profile.dev]
 opt-level = 's'
@@ -21,8 +20,4 @@ lto = true
 opt-level = 'z'
 lto = true
 debug = false
-
-[[bin]]
-name = "bmb_sender_stm32f3"
 test = false
-bench = false
