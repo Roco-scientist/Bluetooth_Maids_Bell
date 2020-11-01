@@ -9,6 +9,7 @@ use panic_abort as _;
 
 use cortex_m_rt::entry;
 use stm32f4xx_hal::{
+    block,
     prelude::*,
     serial::{config, Serial},
     stm32, time,
@@ -19,15 +20,15 @@ fn main() -> ! {
     // pulling peripherals
     let peripherals = stm32::Peripherals::take().unwrap();
     // using rcc
-    let mut rcc = peripherals.RCC.constrain();
+    let rcc = peripherals.RCC.constrain();
 
     // clock for usart1 timiing
     let clocks = rcc.cfgr.use_hse(8.mhz()).freeze();
 
     // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
-    let mut gpioa = peripherals.GPIOA.split();
+    let gpioa = peripherals.GPIOA.split();
     // setup gpiob for the button
-    let mut gpiob = peripherals.GPIOB.split();
+    let gpiob = peripherals.GPIOB.split();
 
     // create pull down input button pin on pb2
     let button = gpiob.pb10.into_pull_down_input();
@@ -38,7 +39,7 @@ fn main() -> ! {
     let usart1_rxd = gpioa.pa10.into_alternate_af7();
 
     // setup bluetooth config
-    let mut bluetooth_config = config::Config {
+    let bluetooth_config = config::Config {
         baudrate: time::Bps(9600),
         wordlength: config::WordLength::DataBits8,
         parity: config::Parity::ParityNone,
@@ -55,10 +56,9 @@ fn main() -> ! {
     .unwrap();
 
     // split out the tx and rx communication of the bluetooth
-    let (mut usart1_tx, mut usart1_rx) = usart1.split();
+    let (mut usart1_tx, _usart1_rx) = usart1.split();
 
     // used later to display whether or not a signal was received
-    let mut recieved = false;
     loop {
         // Below is for debugging
         //if button.is_low().unwrap() {
@@ -78,18 +78,9 @@ fn main() -> ! {
         while button.is_low().unwrap() {}
 
         // When button is pressed send a BUZZ signal
-        usart1_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
-        usart1_tx.bflush().unwrap();
-
-        // for future relay of received
-        if let Ok(_) = usart1_rx.read() {
-            recieved = true;
+        for byte in b"BUZZ" {
+            block!(usart1_tx.write(*byte)).unwrap();
         }
-        if recieved {
-            // light on will go here in the future
-            usart1_tx.bwrite_all(&b"RECEIVED"[..]).unwrap();
-            usart1_tx.bflush().unwrap();
-            recieved = false
-        }
+        block!(usart1_tx.flush()).unwrap();
     }
 }
