@@ -1,5 +1,5 @@
 [package]
-name = "bmb_sender_stm32f401"
+name = "bmb_receiver_stm32f401"
 version = "0.1.0"
 authors = ["Rory Coffey <coffeyrt@gmail.com>"]
 edition = "2018"
