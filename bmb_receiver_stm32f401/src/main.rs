@@ -26,7 +26,7 @@ fn main() -> ! {
     let rcc = peripherals.RCC.constrain();
 
     // clock for usart1 timiing
-    let clocks = rcc.cfgr.use_hse(8.mhz()).freeze();
+    let clocks = rcc.cfgr.freeze();
     //
     let mut delay = Delay::new(cortex_peripherals.SYST, clocks);
 

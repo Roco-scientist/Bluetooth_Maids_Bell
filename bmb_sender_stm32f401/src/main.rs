@@ -23,7 +23,7 @@ fn main() -> ! {
     let rcc = peripherals.RCC.constrain();
 
     // clock for usart1 timiing
-    let clocks = rcc.cfgr.use_hse(8.mhz()).freeze();
+    let clocks = rcc.cfgr.freeze();
 
     // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
     let gpioa = peripherals.GPIOA.split();
