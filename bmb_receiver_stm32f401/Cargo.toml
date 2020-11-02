@@ -1,0 +1,24 @@
+[package]
+name = "bmb_sender_stm32f401"
+version = "0.1.0"
+authors = ["Rory Coffey <coffeyrt@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cortex-m = "0.6"
+cortex-m-rt = "0.6"
+panic-itm = "0.4"
+panic-abort = "0.3"
+stm32f4xx-hal = {version = "0.8", features = ["stm32f401", "rt"]}
+
+[profile.dev]
+opt-level = 's'
+lto = true
+
+[profile.release]
+opt-level = 'z'
+lto = true
+debug = false
+test = false
