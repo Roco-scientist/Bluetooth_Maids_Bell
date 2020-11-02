@@ -15,7 +15,6 @@ use stm32f4xx_hal::{
     prelude::*,
     serial::{config, Serial},
     stm32, time,
-    timer::Timer,
 };
 
 #[entry]
@@ -29,7 +28,6 @@ fn main() -> ! {
     // clock for usart1 timiing
     let clocks = rcc.cfgr.use_hse(8.mhz()).freeze();
     //
-    let timer = Timer::tim2(peripherals.TIM2, 8.mhz(), clocks);
     let mut delay = Delay::new(cortex_peripherals.SYST, clocks);
 
     // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
@@ -66,28 +64,31 @@ fn main() -> ! {
 
     loop {
         // create empty data array to put read data into
-        let mut data = [0u8; 32usize];
+        let mut data = [0u8; 32];
 
-        // Wait for signal to come from sender and put read into data array
-        block!(usart1_rx.read()).unwrap();
+        // make sure at least 4 bytes are received before going forward
+        for x in 0..4 {
+            // Wait for signal to come from sender and put the read into data vector
+            data[x] = block!(usart1_rx.read()).unwrap();
+        }
 
         // run buzzer signal
-        buzz(&mut buzzer_pin, 300, &delay, 500);
+        buzz(&mut buzzer_pin, 300, &mut delay, 500);
         delay.delay_ms(500u32);
-        buzz(&mut buzzer_pin, 1000, &delay, 500);
+        buzz(&mut buzzer_pin, 1000, &mut delay, 500);
         delay.delay_ms(500u32);
-        buzz(&mut buzzer_pin, 200, &delay, 500);
+        buzz(&mut buzzer_pin, 200, &mut delay, 500);
     }
 }
 
 fn buzz(
     pin: &mut gpio::gpiob::PB9<gpio::Output<gpio::PushPull>>,
     hz: u32,
-    delay: &Delay,
+    delay: &mut Delay,
     duration: u32,
 ) -> () {
     // start with pin in low to make sure
-    pin.set_low();
+    pin.set_low().unwrap();
 
     // find the number of times signal needs to be changed.  2x because both up and down need to be
     // set
@@ -98,9 +99,9 @@ fn buzz(
 
     // set the pin to high then low with previous paramaters
     for _ in 0..repeats {
-        pin.set_high();
+        pin.set_high().unwrap();
         delay.delay_ms(pause);
-        pin.set_low();
+        pin.set_low().unwrap();
         delay.delay_ms(pause);
     }
 }
