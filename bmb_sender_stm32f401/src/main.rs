@@ -42,8 +42,8 @@ const APP: () = {
         // create pull down input button pin on pb2
         let button = gpiob.pb10.into_pull_down_input();
 
-        // set pb10 as an external interrupt
-        // TODO Fix this
+        // set pb10 as an external rising trigger interrupt
+        // sets the rtsr at an offset of 8
         device.SYSCFG.exticr3.write(|w| w.exti10().bits(1));
 
         // create tx and rx pins with alternative funcction 7
@@ -69,7 +69,7 @@ const APP: () = {
         .unwrap();
 
         // split out the tx and rx communication of the bluetooth
-        let (mut bluetooth_tx, bluetooth_rx) = usart1.split();
+        let (bluetooth_tx, bluetooth_rx) = usart1.split();
         init::LateResources {
             bluetooth_tx,
             bluetooth_rx,
@@ -77,7 +77,7 @@ const APP: () = {
         }
     }
 
-    #[task(binds = EXTI3_10, resources = [button, bluetooth_tx])]
+    #[task(binds = EXTI3, resources = [button, bluetooth_tx])]
     fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
         // When button is pressed send a BUZZ signal
         for byte in b"BUZZ" {
