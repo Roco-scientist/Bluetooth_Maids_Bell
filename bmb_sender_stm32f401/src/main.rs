@@ -25,11 +25,10 @@ const APP: () = {
     }
     #[init()]
     fn init(cx: init::Context) -> init::LateResources {
-        let device: stm32::Peripherals = cx.device;
         // pulling peripherals
-        let peripherals = stm32::Peripherals::take().unwrap();
+        let peripherals: stm32::Peripherals = cx.device;
         // using rcc
-        let rcc = device.RCC.constrain();
+        let rcc = peripherals.RCC.constrain();
 
         // clock for usart1 timiing
         let clocks = rcc.cfgr.freeze();
@@ -44,7 +43,7 @@ const APP: () = {
 
         // set pb10 as an external rising trigger interrupt
         // sets the rtsr at an offset of 8
-        device.SYSCFG.exticr3.write(|w| w.exti10().bits(1));
+        peripherals.SYSCFG.exticr3.write(|w| w.exti10().bits(1));
 
         // create tx and rx pins with alternative funcction 7
         // USART1 is found as AF07 within datasheet
