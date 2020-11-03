@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 cortex-m = "0.6"
 cortex-m-rt = "0.6"
+cortex-m-rtic = "0.5"
 panic-itm = "0.4"
 panic-abort = "0.3"
 stm32f4xx-hal = {version = "0.8", features = ["stm32f401", "rt"]}
