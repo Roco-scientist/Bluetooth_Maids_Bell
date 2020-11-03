@@ -58,6 +58,8 @@ const APP: () = {
             stopbits: config::StopBits::STOP1,
         };
 
+        // turn on rxne received data ready to be read interrupt for USART1
+        peripherals.USART1.cr1.write(|w| w.rxneie().set_bit());
         // setup usart with tx and rx pins, along with bus and clocks
         let usart1 = Serial::usart1(
             peripherals.USART1,
@@ -66,11 +68,6 @@ const APP: () = {
             clocks,
         )
         .unwrap();
-
-        peripherals
-            .SYSCFG
-            .exticr3
-            .write(|w| unsafe { w.exti9().bits(1) });
 
         // split out the tx and rx communication of the bluetooth
         let (bluetooth_tx, bluetooth_rx) = usart1.split();
@@ -91,6 +88,11 @@ const APP: () = {
             data[x] = block!(ctx.resources.bluetooth_rx.read()).unwrap();
         }
         buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
+        ctx.resources.delay.delay_ms(500);
+        buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
+        ctx.resources.delay.delay_ms(500);
+        buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
+        ctx.resources.delay.delay_ms(500);
     }
 };
 
