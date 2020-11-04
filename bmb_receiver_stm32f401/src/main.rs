@@ -88,11 +88,13 @@ const APP: () = {
             data[x] = block!(ctx.resources.bluetooth_rx.read()).unwrap();
         }
         buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
-        ctx.resources.delay.delay_ms(500);
+        ctx.resources.delay.delay_ms(500u32);
         buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
-        ctx.resources.delay.delay_ms(500);
+        ctx.resources.delay.delay_ms(500u32);
         buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
-        ctx.resources.delay.delay_ms(500);
+        ctx.resources.delay.delay_ms(500u32);
+        // TODO flush bluetooth_rx data
+        while ctx.resources.bluetooth_rx.read().is_ok() {}
     }
 };
 
