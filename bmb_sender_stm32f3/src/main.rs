@@ -26,6 +26,8 @@ const APP: () = {
     fn init(cx: init::Context) -> init::LateResources {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
+        // enable syscfg for interrupt below
+        peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
         let mut rcc = peripherals.RCC.constrain();
         // flash for the clock
@@ -45,10 +47,13 @@ const APP: () = {
             .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
         // make button push into an interrupt
-        peripherals
-            .SYSCFG
-            .exticr1
-            .write(|w| unsafe { w.exti2().bits(0b001) }); // per the manual 001 indicates pb2 on exti2
+        let syscfg = &peripherals.SYSCFG;
+        syscfg.exticr1.write(|w| unsafe { w.exti2().bits(0b001) }); // per the manual 001 indicates pb2 on exti2
+
+        // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
+        let exti = &peripherals.EXTI;
+        exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt
+        exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
 
         // create tx and rx pins with alternative funcction 7
         let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
