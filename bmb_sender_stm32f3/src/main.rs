@@ -27,7 +27,6 @@ const APP: () = {
     fn init(cx: init::Context) -> init::LateResources {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
-        let cm_peripherals = cortex_m::Peripherals::take().unwrap();
         // enable syscfg for interrupt below
         peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
