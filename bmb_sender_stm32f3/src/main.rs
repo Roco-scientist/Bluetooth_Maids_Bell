@@ -7,6 +7,7 @@ use panic_itm as _;
 #[cfg(not(debug_assertions))]
 use panic_abort as _;
 
+use cortex_m::peripheral::NVIC;
 use rtic::app;
 use stm32f3xx_hal::{
     gpio::{gpiob::PB2, Input, PullDown},
@@ -26,6 +27,7 @@ const APP: () = {
     fn init(cx: init::Context) -> init::LateResources {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
+        let cm_peripherals = cortex_m::Peripherals::take().unwrap();
         // enable syscfg for interrupt below
         peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
@@ -54,6 +56,9 @@ const APP: () = {
         let exti = &peripherals.EXTI;
         exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt
         exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
+
+        // connect the interrupt to NVIC
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI1) };
 
         // create tx and rx pins with alternative funcction 7
         let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
