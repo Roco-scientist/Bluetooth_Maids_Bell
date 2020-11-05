@@ -48,7 +48,7 @@ const APP: () = {
         peripherals
             .SYSCFG
             .exticr1
-            .write(|w| unsafe { w.exti2().bits(1) });
+            .write(|w| unsafe { w.exti2().bits(0b001) }); // per the manual 001 indicates pb2 on exti2
 
         // create tx and rx pins with alternative funcction 7
         let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
