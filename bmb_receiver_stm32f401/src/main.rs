@@ -37,8 +37,8 @@ const APP: () = {
         // using rcc
         let rcc = peripherals.RCC.constrain();
 
-        // clock for usart1 timiing
-        let clocks = rcc.cfgr.freeze();
+        // clock for usart1 timiing, using HSE at 25mhz.
+        let clocks = rcc.cfgr.use_hse(25.mhz()).freeze();
         //
         let delay = Delay::new(cortex_peripherals.SYST, clocks);
 

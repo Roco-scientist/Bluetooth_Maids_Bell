@@ -33,8 +33,8 @@ const APP: () = {
         // using rcc
         let rcc = peripherals.RCC.constrain();
 
-        // clock for usart1 timiing
-        let clocks = rcc.cfgr.freeze();
+        // clock for usart1 timing, using HSE at 25mhz
+        let clocks = rcc.cfgr.use_hse(25.mhz()).freeze();
 
         // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
         let gpioa = peripherals.GPIOA.split();
