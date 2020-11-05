@@ -7,6 +7,7 @@ use panic_itm as _;
 #[cfg(not(debug_assertions))]
 use panic_abort as _;
 
+use cortex_m::NVIC;
 use rtic::app;
 use stm32f4xx_hal::{
     block,
@@ -27,6 +28,8 @@ const APP: () = {
     fn init(cx: init::Context) -> init::LateResources {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
+        // enable syscfg for interrupt below
+        peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
         let rcc = peripherals.RCC.constrain();
 
@@ -43,7 +46,17 @@ const APP: () = {
 
         // set pb10 as an external rising trigger interrupt
         // sets the rtsr at an offset of 8
-        peripherals.SYSCFG.exticr3.write(|w| w.exti10().bits(1));
+        // make button push into an interrupt
+        let syscfg = &peripherals.SYSCFG;
+        syscfg.exticr3.write(|w| unsafe { w.exti10().bits(0b0001) }); // per the manual 001 indicates pb2 on exti2
+
+        // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
+        let exti = &peripherals.EXTI;
+        exti.imr3.modify(|_, w| w.mr10().set_bit()); // unmask interrupt
+        exti.rtsr3.modify(|_, w| w.tr10().set_bit()); // trigger on rising-edge
+
+        // connect the interrupt to NVIC
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI3) };
 
         // create tx and rx pins with alternative funcction 7
         // USART1 is found as AF07 within datasheet
