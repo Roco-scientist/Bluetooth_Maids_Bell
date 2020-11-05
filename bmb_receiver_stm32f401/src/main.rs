@@ -7,6 +7,7 @@ use panic_itm as _;
 #[cfg(not(debug_assertions))]
 use panic_abort as _;
 
+use cortex_m::peripheral::NVIC;
 use rtic::app;
 use stm32f4xx_hal::{
     block,
@@ -30,6 +31,9 @@ const APP: () = {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
         let cortex_peripherals = cortex_m::Peripherals::take().unwrap();
+
+        // enable syscfg for interrupt
+        peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
         let rcc = peripherals.RCC.constrain();
 
@@ -58,8 +62,12 @@ const APP: () = {
             stopbits: config::StopBits::STOP1,
         };
 
-        // turn on rxne received data ready to be read interrupt for USART1
+        // turn on rxne receive buffer not empty to be read interrupt for USART1
         peripherals.USART1.cr1.write(|w| w.rxneie().set_bit());
+
+        // unmask the interrupt for the NVIC
+        unsafe { NVIC::unmask(stm32::interrupt::USART1) };
+
         // setup usart with tx and rx pins, along with bus and clocks
         let usart1 = Serial::usart1(
             peripherals.USART1,
