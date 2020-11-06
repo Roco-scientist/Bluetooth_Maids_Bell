@@ -25,6 +25,8 @@ const APP: () = {
         bluetooth_rx: Rx<stm32::USART1>,
         delay: Delay,
         buzzer_pin: PB9<Output<PushPull>>,
+        rx_data: [u8; 32],
+        rx_data_index: usize,
     }
     #[init()]
     fn init(cx: init::Context) -> init::LateResources {
@@ -77,6 +79,12 @@ const APP: () = {
         )
         .unwrap();
 
+        // init empty data
+        let rx_data = [0u8; 32];
+
+        // init index
+        let rx_data_index = 0usize;
+
         // split out the tx and rx communication of the bluetooth
         let (bluetooth_tx, bluetooth_rx) = usart1.split();
         init::LateResources {
@@ -84,27 +92,35 @@ const APP: () = {
             bluetooth_rx,
             delay,
             buzzer_pin,
+            rx_data,
+            rx_data_index,
         }
     }
-    #[task(binds = USART1, resources = [buzzer_pin, delay, bluetooth_rx])]
+    #[task(binds = USART1, resources = [buzzer_pin, delay, bluetooth_rx, rx_data, rx_data_index])]
     fn usart1_interrupt(ctx: usart1_interrupt::Context) {
-        let mut data = [0u8; 32];
+        // mask the interrupt for the NVIC
+        unsafe { NVIC::mask(stm32::interrupt::USART1) };
 
-        // make sure at least 4 bytes are received before going forward
-        for x in 0..4 {
-            // Wait for signal to come from sender and put the read into data vector
-            data[x] = block!(ctx.resources.bluetooth_rx.read()).unwrap();
-        }
-        buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
-        ctx.resources.delay.delay_ms(500u32);
-        buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
-        ctx.resources.delay.delay_ms(500u32);
-        buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
-        ctx.resources.delay.delay_ms(500u32);
-        // TODO flush bluetooth_rx data
-        while ctx.resources.bluetooth_rx.read().is_ok() {}
+        ctx.resources.rx_data[*ctx.resources.rx_data_index] =
+            block!(ctx.resources.bluetooth_rx.read()).unwrap();
+
+        ctx.resources.rx_data_index = &mut ((*ctx.resources.rx_data_index + 1usize) % 32);
+
+        // unmask the interrupt for the NVIC
+        unsafe { NVIC::unmask(stm32::interrupt::USART1) };
     }
 };
+
+// TODO make below into software interupt if more than enough data
+pub fn mult_buzz() {
+    buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
+    ctx.resources.delay.delay_ms(500u32);
+    buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
+    ctx.resources.delay.delay_ms(500u32);
+    buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
+    ctx.resources.delay.delay_ms(500u32);
+    while ctx.resources.bluetooth_rx.read().is_ok() {}
+}
 
 pub fn buzz(pin: &mut PB9<Output<PushPull>>, hz: u32, delay: &mut Delay, duration: u32) -> () {
     // start with pin in low to make sure
