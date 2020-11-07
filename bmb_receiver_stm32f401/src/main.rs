@@ -96,7 +96,7 @@ const APP: () = {
             rx_data_index,
         }
     }
-    #[task(binds = USART1, resources = [buzzer_pin, delay, bluetooth_rx, rx_data, rx_data_index])]
+    #[task(binds = USART1, spawn=[alarm], resources = [buzzer_pin, delay, bluetooth_rx, rx_data, rx_data_index])]
     fn usart1_interrupt(ctx: usart1_interrupt::Context) {
         // mask the interrupt for the NVIC
         unsafe { NVIC::mask(stm32::interrupt::USART1) };
@@ -104,23 +104,27 @@ const APP: () = {
         ctx.resources.rx_data[*ctx.resources.rx_data_index] =
             block!(ctx.resources.bluetooth_rx.read()).unwrap();
 
-        ctx.resources.rx_data_index = &mut ((*ctx.resources.rx_data_index + 1usize) % 32);
+        *ctx.resources.rx_data_index = (ctx.resources.rx_data_index + 1usize) % 32;
+
+        if ctx.resources.rx_data_index >= 4 {
+            ctx.spawn.alarm;
+            while ctx.resources.bluetooth_rx.read().is_ok() {}
+            *ctx.resources.rc_data_index = 0;
+        }
 
         // unmask the interrupt for the NVIC
         unsafe { NVIC::unmask(stm32::interrupt::USART1) };
     }
+    #[task(binds=alarm, resources = [buzzer_pin, delay])]
+    pub fn alarm(ctx: alarm::Context) {
+        buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
+        ctx.resources.delay.delay_ms(500u32);
+        buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
+        ctx.resources.delay.delay_ms(500u32);
+        buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
+        ctx.resources.delay.delay_ms(500u32);
+    }
 };
-
-// TODO make below into software interupt if more than enough data
-pub fn mult_buzz() {
-    buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
-    ctx.resources.delay.delay_ms(500u32);
-    buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
-    ctx.resources.delay.delay_ms(500u32);
-    buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
-    ctx.resources.delay.delay_ms(500u32);
-    while ctx.resources.bluetooth_rx.read().is_ok() {}
-}
 
 pub fn buzz(pin: &mut PB9<Output<PushPull>>, hz: u32, delay: &mut Delay, duration: u32) -> () {
     // start with pin in low to make sure
