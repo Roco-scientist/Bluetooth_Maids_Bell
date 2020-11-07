@@ -104,25 +104,28 @@ const APP: () = {
         ctx.resources.rx_data[*ctx.resources.rx_data_index] =
             block!(ctx.resources.bluetooth_rx.read()).unwrap();
 
-        *ctx.resources.rx_data_index = (ctx.resources.rx_data_index + 1usize) % 32;
+        *ctx.resources.rx_data_index = (*ctx.resources.rx_data_index + 1usize) % 32;
 
-        if ctx.resources.rx_data_index >= 4 {
-            ctx.spawn.alarm;
+        if *ctx.resources.rx_data_index >= 4usize {
+            ctx.spawn.alarm().unwrap();
             while ctx.resources.bluetooth_rx.read().is_ok() {}
-            *ctx.resources.rc_data_index = 0;
+            *ctx.resources.rx_data_index = 0usize;
         }
 
         // unmask the interrupt for the NVIC
         unsafe { NVIC::unmask(stm32::interrupt::USART1) };
     }
-    #[task(binds=alarm, resources = [buzzer_pin, delay])]
-    pub fn alarm(ctx: alarm::Context) {
+    #[task(resources = [buzzer_pin, delay])]
+    fn alarm(ctx: alarm::Context) {
         buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
         ctx.resources.delay.delay_ms(500u32);
         buzz(ctx.resources.buzzer_pin, 500, ctx.resources.delay, 500);
         ctx.resources.delay.delay_ms(500u32);
         buzz(ctx.resources.buzzer_pin, 1000, ctx.resources.delay, 500);
         ctx.resources.delay.delay_ms(500u32);
+    }
+    extern "C" {
+        fn SSI0();
     }
 };
 
