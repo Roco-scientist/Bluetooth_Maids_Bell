@@ -21,7 +21,7 @@ fn main() {
 
     loop {
         // create empty data array to put read data into
-        let mut data = [0u8; 32usize];
+        let mut data = ['\0'; 32usize];
 
         // Wait for signal to come from sender and put read into data array
         bluetooth.read(&mut data).unwrap();
