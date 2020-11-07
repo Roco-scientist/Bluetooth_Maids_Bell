@@ -53,7 +53,7 @@ const APP: () = {
 
         // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
         let exti = &peripherals.EXTI;
-        exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt
+        exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt, mr is mask registrar
         exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
 
         // connect the interrupt to NVIC
