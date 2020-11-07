@@ -21,7 +21,7 @@ fn main() {
 
     loop {
         // create empty data array to put read data into
-        let mut data = ['\0'; 32usize];
+        let mut data = [0; 32usize];
 
         // Wait for signal to come from sender and put read into data array
         bluetooth.read(&mut data).unwrap();
@@ -30,7 +30,7 @@ fn main() {
         println!("{:?}", data);
 
         // return a signal of receipt and confirmation
-        bluetooth.write(&b"RECEIVED"[..]).unwrap();
+        // bluetooth.write(&b"RECEIVED"[..]).unwrap();
 
         // run buzzer signal
         buzz(&mut buzzer_pin, 300, time::Duration::from_millis(500)).unwrap();
