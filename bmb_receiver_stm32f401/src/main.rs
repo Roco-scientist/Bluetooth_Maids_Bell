@@ -25,7 +25,7 @@ const APP: () = {
         bluetooth_rx: Rx<stm32::USART1>,
         delay: Delay,
         buzzer_pin: PB9<Output<PushPull>>,
-        rx_data: [u8; 32],
+        rx_data: [char; 32],
         rx_data_index: usize,
     }
     #[init()]
@@ -80,7 +80,7 @@ const APP: () = {
         .unwrap();
 
         // init empty data
-        let rx_data = [0u8; 32];
+        let rx_data = ['\0'; 32];
 
         // init index
         let rx_data_index = 0usize;
@@ -102,7 +102,7 @@ const APP: () = {
         NVIC::mask(stm32::interrupt::USART1);
 
         ctx.resources.rx_data[*ctx.resources.rx_data_index] =
-            block!(ctx.resources.bluetooth_rx.read()).unwrap();
+            block!(ctx.resources.bluetooth_rx.read()).unwrap() as char;
 
         *ctx.resources.rx_data_index = (*ctx.resources.rx_data_index + 1usize) % 32;
 
