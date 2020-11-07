@@ -99,7 +99,7 @@ const APP: () = {
     #[task(binds = USART1, spawn=[alarm], resources = [buzzer_pin, delay, bluetooth_rx, rx_data, rx_data_index])]
     fn usart1_interrupt(ctx: usart1_interrupt::Context) {
         // mask the interrupt for the NVIC
-        unsafe { NVIC::mask(stm32::interrupt::USART1) };
+        NVIC::mask(stm32::interrupt::USART1);
 
         ctx.resources.rx_data[*ctx.resources.rx_data_index] =
             block!(ctx.resources.bluetooth_rx.read()).unwrap();
@@ -125,7 +125,9 @@ const APP: () = {
         ctx.resources.delay.delay_ms(500u32);
     }
     extern "C" {
-        fn SSI0();
+        // unused interrupt to take place of calling the software task
+        // strange requirement by RTIC
+        fn USART2();
     }
 };
 
