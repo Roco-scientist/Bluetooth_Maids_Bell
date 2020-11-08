@@ -22,6 +22,7 @@ const APP: () = {
         bluetooth_tx: Tx<stm32::USART1>,
         bluetooth_rx: Rx<stm32::USART1>,
         button: PB2<Input<PullDown>>,
+        exti: stm32::EXTI,
     }
     #[init()]
     fn init(cx: init::Context) -> init::LateResources {
@@ -43,7 +44,7 @@ const APP: () = {
         let mut gpiob = peripherals.GPIOB.split(&mut rcc.ahb);
 
         // create pull down input button pin on pb2
-        let mut button = gpiob
+        let button = gpiob
             .pb2
             .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
@@ -54,7 +55,7 @@ const APP: () = {
         syscfg.exticr1.write(|w| unsafe { w.exti2().bits(0b001) }); // per the manual 001 indicates pb2 on exti2
 
         // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
-        let exti = &peripherals.EXTI;
+        let exti = peripherals.EXTI;
         exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt, mr is mask registrar
         exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
 
@@ -81,6 +82,7 @@ const APP: () = {
             bluetooth_tx,
             bluetooth_rx,
             button,
+            exti,
         }
     }
     #[idle]
@@ -88,10 +90,13 @@ const APP: () = {
         rtic::pend(stm32::Interrupt::EXTI2_TSC);
         loop {}
     }
-    #[task(binds = EXTI2_TSC, resources = [button, bluetooth_tx])]
+    #[task(binds = EXTI2_TSC, resources = [button, bluetooth_tx, exti])]
     fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
+        NVIC::mask(stm32::interrupt::EXTI2_TSC);
         // When button is pressed send a BUZZ signal
         ctx.resources.bluetooth_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
         ctx.resources.bluetooth_tx.bflush().unwrap();
+        ctx.resources.exti.pr1.write(|w| w.pr2().clear_bit());
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI2_TSC) }
     }
 };
