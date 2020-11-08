@@ -7,7 +7,7 @@ use panic_itm as _;
 #[cfg(not(debug_assertions))]
 use panic_abort as _;
 
-use cortex_m::NVIC;
+use cortex_m::peripheral::NVIC;
 use rtic::app;
 use stm32f4xx_hal::{
     block,
