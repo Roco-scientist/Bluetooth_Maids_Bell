@@ -23,6 +23,7 @@ const APP: () = {
         bluetooth_tx: Tx<stm32::USART1>,
         bluetooth_rx: Rx<stm32::USART1>,
         button: PB10<Input<PullDown>>,
+        exti: stm32::EXTI,
     }
     #[init()]
     fn init(cx: init::Context) -> init::LateResources {
@@ -44,20 +45,20 @@ const APP: () = {
         // create pull down input button pin on pb2
         // https://github.com/stm32-rs/stm32f4xx-hal/blob/master/examples/stopwatch-with-ssd1306-and-interrupts.rs
         let mut button = gpiob.pb10.into_pull_down_input();
-        button.make_interrupt_source(&mut peripherals.SYSCFG);
-        button.enable_interrupt(&mut peripherals.EXTI);
-        button.trigger_on_edge(&mut peripherals.EXTI, Edge::RISING);
+        // button.make_interrupt_source(&mut peripherals.SYSCFG);
+        // button.enable_interrupt(&mut peripherals.EXTI);
+        // button.trigger_on_edge(&mut peripherals.EXTI, Edge::RISING);
 
         // set pb10 as an external rising trigger interrupt
         // sets the rtsr at an offset of 8
         // make button push into an interrupt
-        // let syscfg = &peripherals.SYSCFG;
-        // syscfg.exticr3.write(|w| unsafe { w.exti10().bits(0b0001) }); // per the manual 001 indicates pb2 on exti2
+        let syscfg = &peripherals.SYSCFG;
+        syscfg.exticr3.write(|w| unsafe { w.exti10().bits(0b0001) }); // per the manual 001 indicates pb2 on exti2
 
         // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
-        // let exti = &peripherals.EXTI;
-        // exti.imr3.modify(|_, w| w.mr10().set_bit()); // unmask interrupt
-        // exti.rtsr3.modify(|_, w| w.tr10().set_bit()); // trigger on rising-edge
+        let exti = peripherals.EXTI;
+        exti.imr.modify(|_, w| w.mr10().set_bit()); // unmask interrupt
+        exti.rtsr.modify(|_, w| w.tr10().set_bit()); // trigger on rising-edge
 
         // connect the interrupt to NVIC
         NVIC::unpend(stm32::interrupt::EXTI3);
@@ -91,16 +92,25 @@ const APP: () = {
             bluetooth_tx,
             bluetooth_rx,
             button,
+            exti,
         }
     }
 
-    #[task(binds = EXTI3, resources = [button, bluetooth_tx])]
+    #[task(binds = EXTI3, resources = [button, bluetooth_tx, exti])]
     fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
+        // mask interrupt so it doesn't occur while this is happening
+        NVIC::mask(stm32::interrupt::EXTI3);
         // When button is pressed send a BUZZ signal
         for byte in b"BUZZ" {
             block!(ctx.resources.bluetooth_tx.write(*byte)).unwrap();
         }
+        // flush what is lef in the registrar
         block!(ctx.resources.bluetooth_tx.flush()).unwrap();
-        ctx.resources.button.clear_interrupt_pending_bit();
+        // ctx.resources.button.clear_interrupt_pending_bit();
+
+        // clear interrupt on pending registrar
+        ctx.resources.exti.pr.modify(|_, w| w.pr10().clear());
+        // unmask the interrupt
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI3) };
     }
 };
