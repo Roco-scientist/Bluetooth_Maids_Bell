@@ -28,8 +28,7 @@ const APP: () = {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
         // enable syscfg for interrupt below
-        let rcc_w = &peripherals.RCC;
-        rcc_w.apb2enr.write(|w| w.syscfgen().set_bit());
+        peripherals.RCC.apb2enr.write(|w| w.syscfgen().enabled());
         // using rcc
         let mut rcc = peripherals.RCC.constrain();
         // flash for the clock
@@ -44,9 +43,11 @@ const APP: () = {
         let mut gpiob = peripherals.GPIOB.split(&mut rcc.ahb);
 
         // create pull down input button pin on pb2
-        let button = gpiob
+        let mut button = gpiob
             .pb2
             .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr);
+
+        // button.make_interrupt_source(&mut peripherals.SYSCFG);
 
         // make button push into an interrupt
         let syscfg = &peripherals.SYSCFG;
@@ -58,7 +59,8 @@ const APP: () = {
         exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
 
         // connect the interrupt to NVIC
-        unsafe { NVIC::unmask(stm32::interrupt::EXTI1) };
+        NVIC::unpend(stm32::interrupt::EXTI2_TSC);
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI2_TSC) };
 
         // create tx and rx pins with alternative funcction 7
         let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
@@ -83,10 +85,10 @@ const APP: () = {
     }
     #[idle]
     fn idle(_: idle::Context) -> ! {
-        rtic::pend(stm32::Interrupt::EXTI1);
+        rtic::pend(stm32::Interrupt::EXTI2_TSC);
         loop {}
     }
-    #[task(binds = EXTI1, resources = [button, bluetooth_tx])]
+    #[task(binds = EXTI2_TSC, resources = [button, bluetooth_tx])]
     fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
         // When button is pressed send a BUZZ signal
         ctx.resources.bluetooth_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
