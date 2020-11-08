@@ -48,8 +48,6 @@ const APP: () = {
             .pb2
             .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
-        // button.make_interrupt_source(&mut peripherals.SYSCFG);
-
         // make button push into an interrupt
         let syscfg = &peripherals.SYSCFG;
         syscfg.exticr1.write(|w| unsafe { w.exti2().bits(0b001) }); // per the manual 001 indicates pb2 on exti2
@@ -59,7 +57,7 @@ const APP: () = {
         exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt, mr is mask registrar
         exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
 
-        // connect the interrupt to NVIC
+        // clear any pending interrupts and connect the interrupt to NVIC
         NVIC::unpend(stm32::interrupt::EXTI2_TSC);
         unsafe { NVIC::unmask(stm32::interrupt::EXTI2_TSC) };
 
@@ -85,18 +83,17 @@ const APP: () = {
             exti,
         }
     }
-    #[idle]
-    fn idle(_: idle::Context) -> ! {
-        rtic::pend(stm32::Interrupt::EXTI2_TSC);
-        loop {}
-    }
     #[task(binds = EXTI2_TSC, resources = [button, bluetooth_tx, exti])]
     fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
+        // mask the interrupt so that it does not occur during an interrupt
         NVIC::mask(stm32::interrupt::EXTI2_TSC);
         // When button is pressed send a BUZZ signal
         ctx.resources.bluetooth_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
+        // flush the buffer
         ctx.resources.bluetooth_tx.bflush().unwrap();
-        ctx.resources.exti.pr1.write(|w| w.pr2().clear_bit());
+        // reset the pending registrar interrupt
+        ctx.resources.exti.pr1.modify(|_, w| w.pr2().clear());
+        // unmask the interrupt
         unsafe { NVIC::unmask(stm32::interrupt::EXTI2_TSC) }
     }
 };
