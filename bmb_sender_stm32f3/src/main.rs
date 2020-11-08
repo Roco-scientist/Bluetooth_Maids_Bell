@@ -28,7 +28,8 @@ const APP: () = {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
         // enable syscfg for interrupt below
-        peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
+        let rcc_w = &peripherals.RCC;
+        rcc_w.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
         let mut rcc = peripherals.RCC.constrain();
         // flash for the clock
@@ -79,6 +80,11 @@ const APP: () = {
             bluetooth_rx,
             button,
         }
+    }
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        rtic::pend(stm32::Interrupt::EXTI1);
+        loop {}
     }
     #[task(binds = EXTI1, resources = [button, bluetooth_tx])]
     fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
