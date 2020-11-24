@@ -24,3 +24,35 @@ STM32F401 to HC-05 or HC-06 bluetooth module<br>
 <br>
 STM32501 to Buzzer:<br>
 Connect STM32 B9 to Buzzer + and Ground to buzzer -<br>
+
+### Build and flash
+Download tool chain for cross compilation:<br>
+`$ rustup target add thumbv7em-none-eabihf`
+Build it:<br>
+`$ cargo build --target thumbv7em-none-eabihf --release`<br>
+Connect ST-link v2 to STM32F401. Connect ST-link USB to the computer.  Setup openocd in a separate terminal:<br>
+`$ openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg`<br>
+Connect to STM32F401 through gdb:<br>
+```
+$ gdb-multiarch -q target/thumbv7em-none-eabihf/release/bmb_receiver_stm32f401
+(gdb) target remote :3333
+(gdb) load
+```
+
+### Test
+In computer terminal connect to device:
+```
+$ sudo bluetoothctl
+[bluetooth]# scan on
+```
+When device is seen:<br>
+```
+[bluetooth]# scan off
+[bluetooth]# pair <mac address>
+[bluetooth]# trust <mac address>
+[bluetooth]# quit
+$ sudo rfcomm bind 0 <mac address>
+$ sudo minicom -D /dev/TODO -b 115200
+```
+<ctrl-a> e<br>
+Type a word and you should hear a buzz
