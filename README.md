@@ -39,10 +39,11 @@ Initial setup
 <li>Connect HC-05 5v/gnd to USB to serial device</li>
 <li>Hold HC-05 button down then connect the USB to a computer device</li>
 </ol>
+
 If done correctly, the bluetooth will slowing blink once every two seconds.  It is in AT mode<br>
 <br>
 Connect to minicom<br>
-`sudo mincom -D /dev/ttyUSB0 -b 38400`
+`sudo mincom -D /dev/ttyUSB0 -b 38400`<br>
 Within minicom each command needs an enter, then ctrl-j<br>
 Replace `new_name` and `0000` with your choice<br>
 Change buad rate to 115200 with 1 stop bit and no parity.  Set AT+ROLE=1 on the receiver bluetooth.  This sets it to slave<br>

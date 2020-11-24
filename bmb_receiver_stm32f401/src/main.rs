@@ -58,7 +58,7 @@ const APP: () = {
 
         // setup bluetooth config
         let bluetooth_config = config::Config {
-            baudrate: time::Bps(9600),
+            baudrate: time::Bps(115200),
             wordlength: config::WordLength::DataBits8,
             parity: config::Parity::ParityNone,
             stopbits: config::StopBits::STOP1,
