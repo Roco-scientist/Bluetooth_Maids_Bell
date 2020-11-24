@@ -9,6 +9,14 @@ it sends a signal through the bluetooth and a buzzer turns on at the other end.<
 <li>Transfer to STM32F401 black pill microncontrollers after they arrive</li>
 </ul>
 
+## Index
+<ul>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#setup">Setup</a></li>
+<li></li>
+<li></li>
+</ul>
+
 ## Requirements
 <ul>
 <li>Raspberry pi 0 w</li>
@@ -21,3 +29,29 @@ it sends a signal through the bluetooth and a buzzer turns on at the other end.<
 </ul>
 
 ### Only two microcontrolles/raspberry pi's will be needed to get this to work
+
+## Setup
+### Bluetooth: HC-05 or HC-06 setup
+Initial setup
+<ol>
+<li>Connect HC-05 TX to RX of USB to serial device</li>
+<li>Connect HC-05 RX to TX of USB to serial device</li>
+<li>Connect HC-05 5v/gnd to USB to serial device</li>
+<li>Hold HC-05 button down then connect the USB to a computer device</li>
+</ol>
+If done correctly, the bluetooth will slowing blink once every two seconds.  It is in AT mode<br>
+<br>
+Connect to minicom<br>
+`sudo mincom -D /dev/ttyUSB0 -b 38400`
+Within minicom each command needs an enter, then ctrl-j<br>
+Replace `new_name` and `0000` with your choice<br>
+Change buad rate to 115200 with 1 stop bit and no parity.  Set AT+ROLE=1 on the receiver bluetooth.  This sets it to slave<br>
+```
+AT
+AT+VERSION
+AT+ADDR
+AT+UART=115200,1,0
+AT+NAME=new_name
+AT+PSWD="0000"
+AT+ROLE=1
+```
