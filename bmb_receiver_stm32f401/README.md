@@ -27,7 +27,7 @@ Connect STM32 B9 to Buzzer + and Ground to buzzer -<br>
 
 ### Build and flash
 Download tool chain for cross compilation:<br>
-`$ rustup target add thumbv7em-none-eabihf`
+`$ rustup target add thumbv7em-none-eabihf`<br>
 Build it:<br>
 `$ cargo build --target thumbv7em-none-eabihf --release`<br>
 Connect ST-link v2 to STM32F401. Connect ST-link USB to the computer.  Setup openocd in a separate terminal:<br>
