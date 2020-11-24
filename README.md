@@ -46,7 +46,7 @@ Connect to minicom<br>
 `sudo mincom -D /dev/ttyUSB0 -b 38400`<br>
 Within minicom each command needs an enter, then ctrl-j<br>
 Replace `new_name` and `0000` with your choice<br>
-Change buad rate to 115200 with 1 stop bit and no parity.  Set AT+ROLE=1 on the receiver bluetooth.  This sets it to slave<br>
+Change buad rate to 115200 with 1 stop bit and no parity.  Set AT+ROLE=0 on the receiver bluetooth.  0: slave, 1: master<br>
 ```
 AT
 AT+VERSION
@@ -54,5 +54,5 @@ AT+ADDR
 AT+UART=115200,1,0
 AT+NAME=new_name
 AT+PSWD="0000"
-AT+ROLE=1
+AT+ROLE=0
 ```
