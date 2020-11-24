@@ -31,7 +31,7 @@ Download tool chain for cross compilation:<br>
 Build it:<br>
 `$ cargo build --target thumbv7em-none-eabihf --release`<br>
 Connect ST-link v2 to STM32F401. Connect ST-link USB to the computer.  Setup openocd in a separate terminal:<br>
-`$ openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg`<br>
+`$ openocd -f interface/stlink-v2.cfg -f target/stm32f4x.cfg`<br>
 Connect to STM32F401 through gdb:<br>
 ```
 $ gdb-multiarch -q target/thumbv7em-none-eabihf/release/bmb_receiver_stm32f401
