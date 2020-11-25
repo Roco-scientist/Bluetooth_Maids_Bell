@@ -96,13 +96,23 @@ const APP: () = {
             rx_data_index,
         }
     }
-    #[task(binds = USART1, spawn=[alarm], resources = [buzzer_pin, delay, bluetooth_rx, rx_data, rx_data_index])]
+    #[idle(spawn=[alarm])]
+    fn idle(ctx: idle::Context) -> ! {
+        ctx.spawn.alarm().unwrap();
+        loop {}
+    }
+
+    #[task(binds = USART1, spawn=[alarm], resources = [buzzer_pin, delay, bluetooth_rx, bluetooth_tx, rx_data, rx_data_index])]
     fn usart1_interrupt(ctx: usart1_interrupt::Context) {
         // mask the interrupt for the NVIC
         NVIC::mask(stm32::interrupt::USART1);
 
         ctx.resources.rx_data[*ctx.resources.rx_data_index] =
             block!(ctx.resources.bluetooth_rx.read()).unwrap() as char;
+
+        for byte in b"BUZZ" {
+            block!(ctx.resources.bluetooth_tx.write(*byte)).unwrap();
+        }
 
         *ctx.resources.rx_data_index = (*ctx.resources.rx_data_index + 1usize) % 32;
 
