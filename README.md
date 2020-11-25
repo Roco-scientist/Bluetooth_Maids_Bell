@@ -50,6 +50,7 @@ Replace `new_name` and `0000` with your choice<br>
 <b>Slave setup:</b><br>
 Change buad rate to 115200 with 1 stop bit and no parity.  Set AT+ROLE=0.  0: slave, 1: master<br>
 Also take note of the address.  This will be needed for the master<br>
+The adress may be missing leading 0's. should be ####:##:######<br>
 ```
 AT
 AT+VERSION
@@ -62,6 +63,7 @@ AT+ROLE=0
 <br><br>
 <b>Master Setup:</b><br>
 Change buad rate to 115200 with 1 stop bit and no parity.  Set AT+ROLE=1.  0: slave, 1: master<br>
+Replace `<slave_address>` witht the address found, but replace the colons with commas<br>
 ```
 AT
 AT+VERSION
