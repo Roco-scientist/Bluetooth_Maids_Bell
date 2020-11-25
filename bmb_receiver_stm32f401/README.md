@@ -52,7 +52,7 @@ When device is seen:<br>
 [bluetooth]# trust <mac address>
 [bluetooth]# quit
 $ sudo rfcomm bind 0 <mac address>
-$ sudo minicom -D /dev/TODO -b 115200
+$ sudo minicom -D /dev/rfcomm0 -b 115200
 ```
 <ctrl-a> e<br>
 Type a word and you should hear a buzz
