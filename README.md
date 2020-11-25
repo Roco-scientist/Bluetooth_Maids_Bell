@@ -43,7 +43,7 @@ Initial setup
 If done correctly, the bluetooth will slowing blink once every two seconds.  It is in AT mode<br>
 <br>
 Connect to minicom<br>
-`sudo mincom -D /dev/ttyUSB0 -b 38400`<br>
+`sudo minicom -D /dev/ttyUSB0 -b 38400`<br>
 Within minicom each command needs an enter, then ctrl-j<br>
 Replace `new_name` and `0000` with your choice<br>
 <br>

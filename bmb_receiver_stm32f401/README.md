@@ -54,5 +54,5 @@ When device is seen:<br>
 $ sudo rfcomm bind 0 <mac address>
 $ sudo minicom -D /dev/rfcomm0 -b 115200
 ```
-<ctrl-a> e<br>
+`<ctrl-a> e`<br>
 Type a word and you should hear a buzz
