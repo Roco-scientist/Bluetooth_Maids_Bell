@@ -60,24 +60,13 @@ fn main() -> ! {
     .unwrap();
 
     // split out the tx and rx communication of the bluetooth
-    let (_usart1_tx, mut usart1_rx) = usart1.split();
+    let (mut usart1_tx, mut usart1_rx) = usart1.split();
 
     loop {
-        // create empty data array to put read data into
-        let mut data = [0u8; 32];
-
-        // make sure at least 4 bytes are received before going forward
-        for x in 0..4 {
+        for byte in b"buzz" {
             // Wait for signal to come from sender and put the read into data vector
-            data[x] = block!(usart1_rx.read()).unwrap();
+            block!(usart1_tx.write(*byte)).unwrap();
         }
-
-        // run buzzer signal
-        buzz(&mut buzzer_pin, 300, &mut delay, 500);
-        delay.delay_ms(500u32);
-        buzz(&mut buzzer_pin, 1000, &mut delay, 500);
-        delay.delay_ms(500u32);
-        buzz(&mut buzzer_pin, 200, &mut delay, 500);
     }
 }
 
