@@ -44,7 +44,7 @@ fn main() -> ! {
 
     // setup bluetooth config
     let bluetooth_config = config::Config {
-        baudrate: time::Bps(9600),
+        baudrate: time::Bps(115200),
         wordlength: config::WordLength::DataBits8,
         parity: config::Parity::ParityNone,
         stopbits: config::StopBits::STOP1,
@@ -63,10 +63,20 @@ fn main() -> ! {
     let (mut usart1_tx, mut usart1_rx) = usart1.split();
 
     loop {
-        for byte in b"buzz" {
+        // create empty data array to put read data into
+        let mut data = [0u8; 32];
+
+        // make sure at least 4 bytes are received before going forward
+        for x in 0..4 {
             // Wait for signal to come from sender and put the read into data vector
-            block!(usart1_tx.write(*byte)).unwrap();
+            data[x] = block!(usart1_rx.read()).unwrap();
         }
+        // run buzzer signal
+        buzz(&mut buzzer_pin, 300, &mut delay, 500);
+        delay.delay_ms(500u32);
+        buzz(&mut buzzer_pin, 1000, &mut delay, 500);
+        delay.delay_ms(500u32);
+        buzz(&mut buzzer_pin, 200, &mut delay, 500);
     }
 }
 
