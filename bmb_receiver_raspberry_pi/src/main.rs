@@ -5,7 +5,7 @@ fn main() {
     // create bluetooth uart connection with no parity, 8 bits data, and 1 bit stopping
     // rfcomm0 is the bound address of HC-05 from the microcontroller
     let mut bluetooth =
-        uart::Uart::with_path("/dev/rfcomm0", 9600, uart::Parity::None, 8, 1).unwrap();
+        uart::Uart::with_path("/dev/rfcomm0", 115200, uart::Parity::None, 8, 1).unwrap();
 
     // setup the bluetooth to pause waiting for a read with a minimum of 4 bits
     bluetooth
