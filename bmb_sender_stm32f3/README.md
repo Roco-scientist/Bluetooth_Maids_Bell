@@ -40,3 +40,17 @@ The other end connected to PB2 with a 500ohm resister
 <td>PA10</td>
 </tr>
 </table>
+
+### Build and flash
+Download tool chain for cross compilation:<br>
+`$ rustup target add thumbv7em-none-eabihf`<br>
+Build it:<br>
+`$ cargo build --target thumbv7em-none-eabihf --release`<br>
+Connect ST-link v2 to STM32F3. Connect ST-link USB to the computer.  Setup openocd in a separate terminal:<br>
+<b>Note:</b> The reset button may need to be held down to connect<br>
+`$ openocd -f interface/stlink-v2-1.cfg -f target/stm32f3x.cfg`<br>
+Connect to STM32F3 through gdb:<br>
+```
+$ gdb-multiarch -q target/thumbv7em-none-eabihf/release/bmb_sender_stm32f3
+(gdb) target remote :3333
+(gdb) load
