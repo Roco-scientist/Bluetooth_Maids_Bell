@@ -60,7 +60,7 @@ fn main() -> ! {
     .unwrap();
 
     // split out the tx and rx communication of the bluetooth
-    let (mut usart1_tx, mut usart1_rx) = usart1.split();
+    let (_usart1_tx, mut usart1_rx) = usart1.split();
 
     loop {
         // create empty data array to put read data into
