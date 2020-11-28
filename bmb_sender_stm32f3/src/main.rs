@@ -69,7 +69,7 @@ const APP: () = {
         let usart1 = stm32f3xx_hal::serial::Serial::usart1(
             peripherals.USART1,
             (usart1_txd, usart1_rxd),
-            9600.bps(),
+            115200.bps(),
             clocks,
             &mut rcc.apb2,
         );
