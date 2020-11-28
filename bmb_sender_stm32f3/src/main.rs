@@ -7,80 +7,93 @@ use panic_itm as _;
 #[cfg(not(debug_assertions))]
 use panic_abort as _;
 
-use cortex_m_rt::entry;
-use stm32f3xx_hal::{prelude::*, stm32};
+use cortex_m::peripheral::NVIC;
+use rtic::app;
+use stm32f3xx_hal::{
+    gpio::{gpiob::PB2, Input, PullDown},
+    prelude::*,
+    serial::{Rx, Tx},
+    stm32,
+};
 
-#[entry]
-fn main() -> ! {
-    // pulling peripherals
-    let peripherals = stm32::Peripherals::take().unwrap();
-    // using rcc
-    let mut rcc = peripherals.RCC.constrain();
-    // flash for the clock
-    let mut flash = peripherals.FLASH.constrain();
+#[rtic::app(device = stm32f3xx_hal::stm32, peripherals = true)]
+const APP: () = {
+    struct Resources {
+        bluetooth_tx: Tx<stm32::USART1>,
+        bluetooth_rx: Rx<stm32::USART1>,
+        button: PB2<Input<PullDown>>,
+        exti: stm32::EXTI,
+    }
+    #[init()]
+    fn init(cx: init::Context) -> init::LateResources {
+        // pulling peripherals
+        let peripherals: stm32::Peripherals = cx.device;
+        // enable syscfg for interrupt below
+        peripherals.RCC.apb2enr.write(|w| w.syscfgen().enabled());
+        // using rcc
+        let mut rcc = peripherals.RCC.constrain();
+        // flash for the clock
+        let mut flash = peripherals.FLASH.constrain();
 
-    // clock for usart1 timiing
-    let clocks = rcc.cfgr.use_hse(8.mhz()).freeze(&mut flash.acr);
+        // clock for usart1 timiing
+        let clocks = rcc.cfgr.use_hse(8.mhz()).freeze(&mut flash.acr);
 
-    // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
-    let mut gpioa = peripherals.GPIOA.split(&mut rcc.ahb);
-    // setup gpiob for the button
-    let mut gpiob = peripherals.GPIOB.split(&mut rcc.ahb);
+        // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
+        let mut gpioa = peripherals.GPIOA.split(&mut rcc.ahb);
+        // setup gpiob for the button
+        let mut gpiob = peripherals.GPIOB.split(&mut rcc.ahb);
 
-    // create pull down input button pin on pb2
-    let button = gpiob
-        .pb2
-        .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr);
+        // create pull down input button pin on pb2
+        let button = gpiob
+            .pb2
+            .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
-    // create tx and rx pins with alternative funcction 7
-    let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
-    let usart1_rxd = gpioa.pa10.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
+        // make button push into an interrupt
+        let syscfg = &peripherals.SYSCFG;
+        syscfg.exticr1.write(|w| unsafe { w.exti2().bits(0b001) }); // per the manual 001 indicates pb2 on exti2
 
-    // setup usart with tx and rx pins, along with bus and clocks
-    let usart1 = stm32f3xx_hal::serial::Serial::usart1(
-        peripherals.USART1,
-        (usart1_txd, usart1_rxd),
-        9600.bps(),
-        clocks,
-        &mut rcc.apb2,
-    );
+        // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
+        let exti = peripherals.EXTI;
+        exti.imr1.modify(|_, w| w.mr2().set_bit()); // unmask interrupt, mr is mask registrar
+        exti.rtsr1.modify(|_, w| w.tr2().set_bit()); // trigger on rising-edge
 
-    // split out the tx and rx communication of the bluetooth
-    let (mut usart1_tx, mut usart1_rx) = usart1.split();
+        // clear any pending interrupts and connect the interrupt to NVIC
+        NVIC::unpend(stm32::interrupt::EXTI2_TSC);
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI2_TSC) };
 
-    // used later to display whether or not a signal was received
-    let mut recieved = false;
-    loop {
-        // Below is for debugging
-        //if button.is_low().unwrap() {
-        //    usart1_tx.bwrite_all(&b"LOW"[..]).unwrap();
-        //    usart1_tx.bflush().unwrap();
-        //} else {
-        //    if button.is_high().unwrap() {
-        //        usart1_tx.bwrite_all(&b"HIGH"[..]).unwrap();
-        //        usart1_tx.bflush().unwrap();
-        //    } else {
-        //        usart1_tx.bwrite_all(&b"NONE"[..]).unwrap();
-        //        usart1_tx.bflush().unwrap();
-        //    }
-        //}
+        // create tx and rx pins with alternative funcction 7
+        let usart1_txd = gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
+        let usart1_rxd = gpioa.pa10.into_af7(&mut gpioa.moder, &mut gpioa.afrh);
 
-        // While button is not pressed, wait
-        while button.is_low().unwrap() {}
+        // setup usart with tx and rx pins, along with bus and clocks
+        let usart1 = stm32f3xx_hal::serial::Serial::usart1(
+            peripherals.USART1,
+            (usart1_txd, usart1_rxd),
+            9600.bps(),
+            clocks,
+            &mut rcc.apb2,
+        );
 
-        // When button is pressed send a BUZZ signal
-        usart1_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
-        usart1_tx.bflush().unwrap();
-
-        // for future relay of received
-        if let Ok(_) = usart1_rx.read() {
-            recieved = true;
-        }
-        if recieved {
-            // light on will go here in the future
-            usart1_tx.bwrite_all(&b"RECEIVED"[..]).unwrap();
-            usart1_tx.bflush().unwrap();
-            recieved = false
+        // split out the tx and rx communication of the bluetooth
+        let (bluetooth_tx, bluetooth_rx) = usart1.split();
+        init::LateResources {
+            bluetooth_tx,
+            bluetooth_rx,
+            button,
+            exti,
         }
     }
-}
+    #[task(binds = EXTI2_TSC, resources = [button, bluetooth_tx, exti])]
+    fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
+        // mask the interrupt so that it does not occur during an interrupt
+        NVIC::mask(stm32::interrupt::EXTI2_TSC);
+        // When button is pressed send a BUZZ signal
+        ctx.resources.bluetooth_tx.bwrite_all(&b"BUZZ"[..]).unwrap();
+        // flush the buffer
+        ctx.resources.bluetooth_tx.bflush().unwrap();
+        // reset the pending registrar interrupt
+        ctx.resources.exti.pr1.modify(|_, w| w.pr2().clear());
+        // unmask the interrupt
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI2_TSC) }
+    }
+};
