@@ -13,6 +13,7 @@ use stm32f4xx_hal::{
     block,
     delay::Delay,
     gpio::{gpiob::PB9, Output, PushPull},
+    hal::digital::v2::OutputPin,
     prelude::*,
     serial::{config, Rx, Serial, Tx},
     stm32, time,
@@ -42,14 +43,15 @@ const APP: () = {
         // clock for usart1 timiing, using HSE at 25mhz.
         let clocks = rcc.cfgr.use_hse(25.mhz()).freeze();
         //
-        let delay = Delay::new(cortex_peripherals.SYST, clocks);
+        let mut delay = Delay::new(cortex_peripherals.SYST, clocks);
 
         // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
         let gpioa = peripherals.GPIOA.split();
         // setup gpiob for the button
         let gpiob = peripherals.GPIOB.split();
 
-        let buzzer_pin = gpiob.pb9.into_push_pull_output();
+        let mut buzzer_pin = gpiob.pb9.into_push_pull_output();
+        buzzer_pin.set_high().unwrap();
 
         // create tx and rx pins with alternative funcction 7
         // USART1 is found as AF07 within datasheet
@@ -96,9 +98,9 @@ const APP: () = {
             rx_data_index,
         }
     }
-    #[idle(spawn=[alarm])]
+    #[idle(spawn=[alarm], resources=[buzzer_pin])]
     fn idle(ctx: idle::Context) -> ! {
-        ctx.spawn.alarm().unwrap();
+        rtic::pend(stm32::interrupt::USART1);
         loop {}
     }
 
@@ -107,12 +109,14 @@ const APP: () = {
         // mask the interrupt for the NVIC
         NVIC::mask(stm32::interrupt::USART1);
 
+        // ctx.resources.buzzer_pin.set_high().unwrap();
         ctx.resources.rx_data[*ctx.resources.rx_data_index] =
             block!(ctx.resources.bluetooth_rx.read()).unwrap() as char;
 
         for byte in b"BUZZ" {
             block!(ctx.resources.bluetooth_tx.write(*byte)).unwrap();
         }
+        ctx.resources.buzzer_pin.set_low().unwrap();
 
         *ctx.resources.rx_data_index = (*ctx.resources.rx_data_index + 1usize) % 32;
 

@@ -17,9 +17,9 @@ stm32f4xx-hal = {version = "0.8", features = ["stm32f401", "rt"]}
 [profile.dev]
 opt-level = 's'
 lto = true
+debug = true 
 
 [profile.release]
 opt-level = 'z'
 lto = true
-debug = false
-test = false
+debug = true 
