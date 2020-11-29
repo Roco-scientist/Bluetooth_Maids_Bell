@@ -21,7 +21,7 @@ STM32F401 to HC-05 or HC-06 bluetooth module<br>
 </table>
 <br>
 <br>
-STM32501 to Buzzer:<br>
+STM32501 to momentary switch:<br>
 Connect STM32 A4 to one end of the switch and 3.3V to the other end<br>
 
 ### Build and flash
