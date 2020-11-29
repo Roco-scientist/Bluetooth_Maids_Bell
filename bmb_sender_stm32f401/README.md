@@ -27,15 +27,21 @@ Connect STM32 A4 to one end of the switch and 3.3V to the other end<br>
 ### Build and flash
 Download tool chain for cross compilation:<br>
 `$ rustup target add thumbv7em-none-eabihf`<br>
+<br>
 Build it:<br>
 `$ cargo build --target thumbv7em-none-eabihf --release`<br>
+<br>
 Connect ST-link v2 to STM32F401. Connect ST-link USB to the computer.  Setup openocd in a separate terminal:<br>
-`$ openocd -f interface/stlink-v2.cfg -f target/stm32f4x.cfg`<br>
+`$ openocd -f interface/stlink-v2.cfg -f target/stm32f4x.cfg -l /tmp/openocd.log`<br>
+<br>
+Some commands below are for debugging<br>
 Connect to STM32F401 through gdb:<br>
 ```
 $ gdb-multiarch -q target/thumbv7em-none-eabihf/release/bmb_sender_stm32f401
 (gdb) target remote :3333
+(gdb) monitor arm semihosting enable
 (gdb) load
+(gdb) continue
 ```
 
 ### Test

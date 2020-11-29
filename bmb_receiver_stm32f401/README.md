@@ -35,6 +35,7 @@ Connect to STM32F401 through gdb:<br>
 ```
 $ gdb-multiarch -q target/thumbv7em-none-eabihf/release/bmb_receiver_stm32f401
 (gdb) target remote :3333
+(gdb) monitor arm semihosting enable
 (gdb) load
 ```
 
