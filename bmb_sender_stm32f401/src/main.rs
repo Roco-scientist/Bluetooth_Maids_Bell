@@ -1,17 +1,24 @@
 #![no_main]
 #![no_std]
 
+extern crate cortex_m_semihosting;
+
 #[cfg(debug_assertions)]
 use panic_itm as _;
 
 #[cfg(not(debug_assertions))]
 use panic_abort as _;
 
+use core::write;
 use cortex_m::peripheral::NVIC;
 use rtic::app;
 use stm32f4xx_hal::{
     block,
-    gpio::{gpioa::PA4, Input, PullDown},
+    delay::Delay,
+    gpio::{
+        gpioa::{PA4, PA5},
+        Input, Output, PullDown, PushPull,
+    },
     prelude::*,
     serial::{config, Rx, Serial, Tx},
     stm32, time,
@@ -24,28 +31,36 @@ const APP: () = {
         bluetooth_rx: Rx<stm32::USART1>,
         button: PA4<Input<PullDown>>,
         exti: stm32::EXTI,
+        led: PA5<Output<PushPull>>,
     }
     #[init()]
     fn init(cx: init::Context) -> init::LateResources {
         // pulling peripherals
         let peripherals: stm32::Peripherals = cx.device;
+        let cortex_peripherals = cortex_m::Peripherals::take().unwrap();
         // enable syscfg for interrupt below
         peripherals.RCC.apb2enr.write(|w| w.syscfgen().enabled());
+        // peripherals.RCC.apb2enr.write(|w| w.syscfgen().set_bit());
         // using rcc
         let rcc = peripherals.RCC.constrain();
 
         // clock for usart1 timing, using HSE at 25mhz
         let clocks = rcc.cfgr.use_hse(25.mhz()).freeze();
 
+        let mut delay = Delay::new(cortex_peripherals.SYST, clocks);
         // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
         let gpioa = peripherals.GPIOA.split();
 
         // create pull down input button pin on pa4
         // https://github.com/stm32-rs/stm32f4xx-hal/blob/master/examples/stopwatch-with-ssd1306-and-interrupts.rs
         let button = gpioa.pa4.into_pull_down_input();
+        let mut led = gpioa.pa5.into_push_pull_output();
         // button.make_interrupt_source(&mut peripherals.SYSCFG);
         // button.enable_interrupt(&mut peripherals.EXTI);
         // button.trigger_on_edge(&mut peripherals.EXTI, Edge::RISING);
+        led.set_high().unwrap();
+        delay.delay_ms(500u32);
+        led.set_low().unwrap();
 
         // set pa4 as an external rising trigger interrupt
         // sets the rtsr at an offset of 8
@@ -91,14 +106,33 @@ const APP: () = {
             bluetooth_rx,
             button,
             exti,
+            led,
         }
     }
 
-    #[task(binds = EXTI2, resources = [button, bluetooth_tx, exti])]
+    #[idle]
+    fn idle(_: idle::Context) -> ! {
+        write!("Loop Started").unwrap();
+        if NVIC::is_active(stm32::interrupt::EXTI2) {
+            write!("EXTI2 is active").unwrap()
+        } else {
+            write!("EXTI2 is not active").unwrap()
+        }
+        if NVIC::is_enabled(stm32::interrupt::EXTI2) {
+            write!("EXTI2 is enabled").unwrap()
+        } else {
+            write!("EXTI2 is not enabled").unwrap()
+        }
+        NVIC::pend(stm32::interrupt::EXTI2);
+        loop {}
+    }
+
+    #[task(binds = EXTI2, resources = [button, bluetooth_tx, exti, led])]
     fn exti_2_4_interrupt(ctx: exti_2_4_interrupt::Context) {
         // mask interrupt so it doesn't occur while this is happening
         NVIC::mask(stm32::interrupt::EXTI2);
         // When button is pressed send a BUZZ signal
+        ctx.resources.led.set_high().unwrap();
         for byte in b"BUZZ" {
             block!(ctx.resources.bluetooth_tx.write(*byte)).unwrap();
         }
