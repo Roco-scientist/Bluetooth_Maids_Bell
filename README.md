@@ -26,6 +26,7 @@ it sends a signal through the bluetooth and a buzzer turns on at the other end.<
 <li>USB serial converter for programming HC-05: <a href=https://www.aliexpress.com/item/32809304504.html>Available here</a></li>
 <li>Momentary switch/button</li>
 <li>Misc electronics; wires, soldering gun, resistors etc.</li>
+<li>Working openocd and gdb-multiarch for flashing STM devices</li>
 </ul>
 
 ### Only two microcontrolles/raspberry pi's will be needed to get this to work
