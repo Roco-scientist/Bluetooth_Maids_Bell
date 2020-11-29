@@ -11,7 +11,7 @@ use cortex_m::peripheral::NVIC;
 use rtic::app;
 use stm32f4xx_hal::{
     block,
-    gpio::{gpiob::PB10, Edge, Input, PullDown},
+    gpio::{gpioa::PA4, Input, PullDown},
     prelude::*,
     serial::{config, Rx, Serial, Tx},
     stm32, time,
@@ -22,7 +22,7 @@ const APP: () = {
     struct Resources {
         bluetooth_tx: Tx<stm32::USART1>,
         bluetooth_rx: Rx<stm32::USART1>,
-        button: PB10<Input<PullDown>>,
+        button: PA4<Input<PullDown>>,
         exti: stm32::EXTI,
     }
     #[init()]
@@ -39,30 +39,28 @@ const APP: () = {
 
         // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
         let gpioa = peripherals.GPIOA.split();
-        // setup gpiob for the button
-        let gpiob = peripherals.GPIOB.split();
 
-        // create pull down input button pin on pb2
+        // create pull down input button pin on pa4
         // https://github.com/stm32-rs/stm32f4xx-hal/blob/master/examples/stopwatch-with-ssd1306-and-interrupts.rs
-        let mut button = gpiob.pb10.into_pull_down_input();
+        let button = gpioa.pa4.into_pull_down_input();
         // button.make_interrupt_source(&mut peripherals.SYSCFG);
         // button.enable_interrupt(&mut peripherals.EXTI);
         // button.trigger_on_edge(&mut peripherals.EXTI, Edge::RISING);
 
-        // set pb10 as an external rising trigger interrupt
+        // set pa4 as an external rising trigger interrupt
         // sets the rtsr at an offset of 8
         // make button push into an interrupt
         let syscfg = &peripherals.SYSCFG;
-        syscfg.exticr3.write(|w| unsafe { w.exti10().bits(0b0001) }); // per the manual 001 indicates pb2 on exti2
+        syscfg.exticr2.write(|w| unsafe { w.exti4().bits(0b0000) }); // per the manual 0000 indicates pa4 on exti4 for exticr2
 
         // from: https://flowdsp.io/blog/stm32f3-01-interrupts/
         let exti = peripherals.EXTI;
-        exti.imr.modify(|_, w| w.mr10().set_bit()); // unmask interrupt
-        exti.rtsr.modify(|_, w| w.tr10().set_bit()); // trigger on rising-edge
+        exti.imr.modify(|_, w| w.mr4().set_bit()); // unmask interrupt
+        exti.rtsr.modify(|_, w| w.tr4().set_bit()); // trigger on rising-edge
 
         // connect the interrupt to NVIC
-        NVIC::unpend(stm32::interrupt::EXTI3);
-        unsafe { NVIC::unmask(stm32::interrupt::EXTI3) };
+        NVIC::unpend(stm32::interrupt::EXTI2);
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI2) };
 
         // create tx and rx pins with alternative funcction 7
         // USART1 is found as AF07 within datasheet
@@ -71,7 +69,7 @@ const APP: () = {
 
         // setup bluetooth config
         let bluetooth_config = config::Config {
-            baudrate: time::Bps(9600),
+            baudrate: time::Bps(115200),
             wordlength: config::WordLength::DataBits8,
             parity: config::Parity::ParityNone,
             stopbits: config::StopBits::STOP1,
@@ -96,10 +94,10 @@ const APP: () = {
         }
     }
 
-    #[task(binds = EXTI3, resources = [button, bluetooth_tx, exti])]
-    fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
+    #[task(binds = EXTI2, resources = [button, bluetooth_tx, exti])]
+    fn exti_2_4_interrupt(ctx: exti_2_4_interrupt::Context) {
         // mask interrupt so it doesn't occur while this is happening
-        NVIC::mask(stm32::interrupt::EXTI3);
+        NVIC::mask(stm32::interrupt::EXTI2);
         // When button is pressed send a BUZZ signal
         for byte in b"BUZZ" {
             block!(ctx.resources.bluetooth_tx.write(*byte)).unwrap();
@@ -109,8 +107,8 @@ const APP: () = {
         // ctx.resources.button.clear_interrupt_pending_bit();
 
         // clear interrupt on pending registrar
-        ctx.resources.exti.pr.modify(|_, w| w.pr10().clear());
+        ctx.resources.exti.pr.modify(|_, w| w.pr4().clear());
         // unmask the interrupt
-        unsafe { NVIC::unmask(stm32::interrupt::EXTI3) };
+        unsafe { NVIC::unmask(stm32::interrupt::EXTI2) };
     }
 };
