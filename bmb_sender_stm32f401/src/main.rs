@@ -27,11 +27,9 @@ fn main() -> ! {
 
     // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
     let gpioa = peripherals.GPIOA.split();
-    // setup gpiob for the button
-    let gpiob = peripherals.GPIOB.split();
 
     // create pull down input button pin on pb2
-    let button = gpiob.pb10.into_pull_down_input();
+    let button = gpiob.pa4.into_pull_down_input();
 
     // create tx and rx pins with alternative funcction 7
     // USART1 is found as AF07 within datasheet
@@ -40,6 +38,7 @@ fn main() -> ! {
 
     // setup bluetooth config
     let bluetooth_config = config::Config {
+        // change below
         baudrate: time::Bps(9600),
         wordlength: config::WordLength::DataBits8,
         parity: config::Parity::ParityNone,
