@@ -29,7 +29,7 @@ fn main() -> ! {
     let gpioa = peripherals.GPIOA.split();
 
     // create pull down input button pin on pb2
-    let button = gpiob.pa4.into_pull_down_input();
+    let button = gpioa.pa4.into_pull_down_input();
 
     // create tx and rx pins with alternative funcction 7
     // USART1 is found as AF07 within datasheet
