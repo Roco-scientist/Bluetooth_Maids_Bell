@@ -53,4 +53,5 @@ Connect to STM32F3 through gdb:<br>
 ```
 $ gdb-multiarch -q target/thumbv7em-none-eabihf/release/bmb_sender_stm32f3
 (gdb) target remote :3333
+(gdb) monitor arm semihosting enable
 (gdb) load
