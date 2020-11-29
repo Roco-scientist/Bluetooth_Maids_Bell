@@ -39,7 +39,7 @@ fn main() -> ! {
     // setup bluetooth config
     let bluetooth_config = config::Config {
         // change below
-        baudrate: time::Bps(9600),
+        baudrate: time::Bps(115200),
         wordlength: config::WordLength::DataBits8,
         parity: config::Parity::ParityNone,
         stopbits: config::StopBits::STOP1,
@@ -59,20 +59,6 @@ fn main() -> ! {
 
     // used later to display whether or not a signal was received
     loop {
-        // Below is for debugging
-        //if button.is_low().unwrap() {
-        //    usart1_tx.bwrite_all(&b"LOW"[..]).unwrap();
-        //    usart1_tx.bflush().unwrap();
-        //} else {
-        //    if button.is_high().unwrap() {
-        //        usart1_tx.bwrite_all(&b"HIGH"[..]).unwrap();
-        //        usart1_tx.bflush().unwrap();
-        //    } else {
-        //        usart1_tx.bwrite_all(&b"NONE"[..]).unwrap();
-        //        usart1_tx.bflush().unwrap();
-        //    }
-        //}
-
         // While button is not pressed, wait
         while button.is_low().unwrap() {}
 
