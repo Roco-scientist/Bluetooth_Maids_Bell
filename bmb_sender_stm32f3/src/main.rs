@@ -84,7 +84,7 @@ const APP: () = {
         }
     }
     #[task(binds = EXTI2_TSC, resources = [button, bluetooth_tx, exti])]
-    fn exti_3_10_interrupt(ctx: exti_3_10_interrupt::Context) {
+    fn exti_2_2_interrupt(ctx: exti_2_2_interrupt::Context) {
         // mask the interrupt so that it does not occur during an interrupt
         NVIC::mask(stm32::interrupt::EXTI2_TSC);
         // When button is pressed send a BUZZ signal
