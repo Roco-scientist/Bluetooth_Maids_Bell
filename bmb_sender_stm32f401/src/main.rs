@@ -30,11 +30,9 @@ fn main() -> ! {
 
     // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
     let gpioa = peripherals.GPIOA.split();
-    // setup gpiob for the button
-    let gpiob = peripherals.GPIOB.split();
 
     // create pull down input button pin on pb2
-    let button = gpiob.pb10.into_pull_down_input();
+    let button = gpioa.pa4.into_pull_down_input();
 
     // create tx and rx pins with alternative funcction 7
     // USART1 is found as AF07 within datasheet
@@ -63,20 +61,6 @@ fn main() -> ! {
 
     // used later to display whether or not a signal was received
     loop {
-        // Below is for debugging
-        //if button.is_low().unwrap() {
-        //    usart1_tx.bwrite_all(&b"LOW"[..]).unwrap();
-        //    usart1_tx.bflush().unwrap();
-        //} else {
-        //    if button.is_high().unwrap() {
-        //        usart1_tx.bwrite_all(&b"HIGH"[..]).unwrap();
-        //        usart1_tx.bflush().unwrap();
-        //    } else {
-        //        usart1_tx.bwrite_all(&b"NONE"[..]).unwrap();
-        //        usart1_tx.bflush().unwrap();
-        //    }
-        //}
-
         // While button is not pressed, wait
         while button.is_low().unwrap() {}
 
