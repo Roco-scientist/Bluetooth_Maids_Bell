@@ -10,6 +10,7 @@ use panic_abort as _;
 use cortex_m_rt::entry;
 use stm32f4xx_hal::{
     block,
+    delay::Delay,
     prelude::*,
     serial::{config, Serial},
     stm32, time,
@@ -19,11 +20,13 @@ use stm32f4xx_hal::{
 fn main() -> ! {
     // pulling peripherals
     let peripherals = stm32::Peripherals::take().unwrap();
+    let cortex_peripherals = cortex_m::Peripherals::take().unwrap();
     // using rcc
     let rcc = peripherals.RCC.constrain();
 
     // clock for usart1 timiing
     let clocks = rcc.cfgr.freeze();
+    let mut delay = Delay::new(cortex_peripherals.SYST, clocks);
 
     // setup gpioa for the tx and rx pins for the HC-05 bluetooth board
     let gpioa = peripherals.GPIOA.split();
@@ -38,7 +41,6 @@ fn main() -> ! {
 
     // setup bluetooth config
     let bluetooth_config = config::Config {
-        // change below
         baudrate: time::Bps(115200),
         wordlength: config::WordLength::DataBits8,
         parity: config::Parity::ParityNone,
@@ -67,5 +69,6 @@ fn main() -> ! {
             block!(usart1_tx.write(*byte)).unwrap();
         }
         block!(usart1_tx.flush()).unwrap();
+        delay.delay_ms(2000u32);
     }
 }
