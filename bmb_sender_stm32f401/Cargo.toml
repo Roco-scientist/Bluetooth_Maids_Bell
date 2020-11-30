@@ -19,5 +19,3 @@ lto = true
 [profile.release]
 opt-level = 'z'
 lto = true
-debug = false
-test = false
